@@ -1,0 +1,37 @@
+AllCops:
+  TargetRubyVersion: 3.1
+  DisplayCopNames: true
+  SuggestExtensions: false
+  NewCops: enable
+  Exclude:
+    - 'lib/sidekiq-redeploy.rb'
+
+require:
+  - rubocop-rake
+  - rubocop-performance
+  - rubocop-rspec
+  - rubocop-thread_safety
+
+Metrics/BlockLength:
+  AllowedMethods: ['describe', 'context']
+
+Metrics/MethodLength:
+  Max: 30
+
+RSpec/NestedGroups:
+  Max: 4
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 12
+
+RSpec/ExampleLength:
+  Max: 6
+
+RSpec/ExpectInHook:
+  Enabled: false
+
+RSpec/StubbedMock:
+  Enabled: false
+
+RSpec/MessageSpies:
+  Enabled: false
