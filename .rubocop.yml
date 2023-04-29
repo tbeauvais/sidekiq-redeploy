@@ -35,3 +35,9 @@ RSpec/StubbedMock:
 
 RSpec/MessageSpies:
   Enabled: false
+
+RSpec/MultipleExpectations:
+  Max: 2
+
+RSpec/SubjectStub:
+  Enabled: false

@@ -16,6 +16,8 @@ Gem::Specification.new do |spec|
   spec.license       = 'MIT'
   spec.required_ruby_version = Gem::Requirement.new('>= 3.1.0')
 
+  spec.executables = ['sidekiq-loader']
+
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/tbeauvais/sidekiq-redeploy'
   spec.metadata['changelog_uri'] = 'https://github.com/tbeauvais/sidekiq-redeploy/CHANGELOG.md'
@@ -29,6 +31,8 @@ Gem::Specification.new do |spec|
   end
   spec.bindir        = 'bin'
   spec.require_paths = ['lib']
+
+  spec.add_dependency 'sidekiq', '>= 6.0'
 
   spec.add_development_dependency 'rake', '~> 13.0.6'
   spec.add_development_dependency 'rspec', '~> 3.12.0'
