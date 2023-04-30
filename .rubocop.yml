@@ -18,6 +18,9 @@ Metrics/BlockLength:
 Metrics/MethodLength:
   Max: 30
 
+Metrics/ClassLength:
+  Max: 120
+
 RSpec/NestedGroups:
   Max: 4
 

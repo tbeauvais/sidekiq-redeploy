@@ -3,5 +3,55 @@
 
 require 'bundler/setup'
 require 'sidekiq-redeploy'
+require 'puma-redeploy'
 
-Sidekiq::Redeploy::Loader.new.run
+def run_sidekiq(ops, logger)
+  deployer = Puma::Redeploy::DeployerFactory.create(target: ops[:app_dir], watch_file: ops[:watch], logger:)
+
+  # Load app archive on launch
+  deployer.deploy(source: deployer.archive_file) if ops[:deploy]
+  config = { watch_delay: ops[:watch_delay] }
+
+  Sidekiq::Redeploy::Loader.new(deployer:, logger:, sidekiq_app: ops[:sidekiq_app], config:).run
+end
+
+def option_parser(opts)
+  OptionParser.new do |o|
+    o.on '-a', '--app-dir=DIR', '[Required] Location of application directory.' do |arg|
+      opts[:app_dir] = arg
+    end
+
+    o.on '-w', '--watch=WATCH', '[Required] Location of watch file (file or s3 location).' do |arg|
+      opts[:watch] = arg
+    end
+
+    o.on '-y', '--watch-delay INTEGER', Integer,
+         '[Optional] Specify the number of seconds between checking watch file. Defaults to 30.' do |arg|
+      opts[:watch_delay] = arg
+    end
+
+    o.on '-d', '--[no-]deploy  [FLAG]', TrueClass,
+         '[Optional] Deploy archive on app startup. Defaults to true.' do |arg|
+      opts[:deploy] = arg
+    end
+
+    o.on '-s', '--sidekiq-app [PATH|DIR]', '[Optional] Location of application to pass to sidekiq.' do |arg|
+      opts[:sidekiq_app] = arg
+    end
+  end
+end
+
+def logger
+  Logger.new($stdout)
+end
+
+ops = { deploy: true, watch_delay: 30 }
+parser = option_parser(ops)
+parser.parse!(ARGV)
+
+unless ops[:app_dir] && ops[:watch]
+  puts parser.help
+  exit 1
+end
+
+run_sidekiq(ops, logger)
