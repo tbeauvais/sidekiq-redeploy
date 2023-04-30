@@ -100,7 +100,7 @@ module Sidekiq
           cli.parse(args)
           cli.run
         rescue StandardError => e
-          message "Error loading sidekiq process: #{e.message}"
+          message = "Error loading sidekiq process: #{e.message}"
           log message
           log e.backtrace.join("\n")
           raise message
