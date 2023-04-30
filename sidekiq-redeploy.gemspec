@@ -32,6 +32,7 @@ Gem::Specification.new do |spec|
   spec.bindir        = 'bin'
   spec.require_paths = ['lib']
 
+  spec.add_dependency 'puma-redeploy', '>= 0.2.1'
   spec.add_dependency 'sidekiq', '>= 6.0'
 
   spec.add_development_dependency 'rake', '~> 13.0.6'
