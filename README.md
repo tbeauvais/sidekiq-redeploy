@@ -7,8 +7,11 @@ Key Points:
 * Deploys in seconds
 * Pluggable handlers to detect redeploy (File, S3, Artifactory, etc..)
 
-Example application can be found [here](https://github.com/tbeauvais/puma-redeploy-test-app)
+![image](https://user-images.githubusercontent.com/121275/235370300-b1430140-e8de-4641-840e-016d97050df5.png)
 
+
+Example application can be found [here](https://github.com/tbeauvais/puma-redeploy-test-app)
+See related [puma-redeploy](https://github.com/tbeauvais/puma-redeploy) gem
 
 ## Installation
 
