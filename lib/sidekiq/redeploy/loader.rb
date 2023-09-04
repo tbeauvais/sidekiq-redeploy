@@ -27,6 +27,7 @@ module Sidekiq
         @loop_delay = config[:loop_delay] || 0.5
         @deployer = deployer
         @sidekiq_app = sidekiq_app
+        @sidekiq_pids = []
       end
 
       def run
@@ -75,7 +76,7 @@ module Sidekiq
         return unless (Time.now - @watch_time) > @watch_delay
 
         @watch_time = Time.now
-        log 'Checking watch file for redeploy'
+        log 'Checking watch file for redeploy !!!'
         deployer.needs_redeploy?
       end
 
