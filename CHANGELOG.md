@@ -1,3 +1,9 @@
+## v0.1.4
+
+**Fixes and enhancements:**
+
+- Fix missing require
+
 ## v0.1.3
 
 **Fixes and enhancements:**
