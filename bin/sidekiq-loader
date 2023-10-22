@@ -4,6 +4,7 @@
 require 'bundler/setup'
 require 'sidekiq-redeploy'
 require 'puma-redeploy'
+require 'optparse'
 
 def run_sidekiq(ops, logger)
   deployer = Puma::Redeploy::DeployerFactory.create(target: ops[:app_dir], watch_file: ops[:watch], logger:)
