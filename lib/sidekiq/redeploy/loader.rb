@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'sidekiq'
-require 'sidekiq/cli'
 require 'logger'
 
 module Sidekiq
@@ -17,6 +16,8 @@ module Sidekiq
       SIGNALS = [INT, TERM, USR2, TTIN].freeze
 
       def initialize(deployer:, sidekiq_app: nil, logger: Logger.new($stdout), config: {})
+        require 'sidekiq/cli'
+
         @reload_sidekiq = false
         @exit_loader = false
         @loader_pid = Process.pid
@@ -72,7 +73,7 @@ module Sidekiq
       end
 
       def needs_redeploy?
-        return unless (Time.now - @watch_time) > @watch_delay
+        return false unless (Time.now - @watch_time) > @watch_delay
 
         @watch_time = Time.now
         log 'Checking watch file for redeploy'

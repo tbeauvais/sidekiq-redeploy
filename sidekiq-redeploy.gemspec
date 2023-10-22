@@ -32,16 +32,8 @@ Gem::Specification.new do |spec|
   spec.bindir        = 'bin'
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'puma-redeploy', '~> 0.3'
+  spec.add_dependency 'puma-redeploy', '~> 0.3.1'
   spec.add_dependency 'sidekiq', '~> 6.0'
 
-  spec.add_development_dependency 'rake', '~> 13.0.6'
-  spec.add_development_dependency 'rspec', '~> 3.12.0'
-  spec.add_development_dependency 'rubocop', '~> 1.43'
-  spec.add_development_dependency 'rubocop-performance', '~> 1.15'
-  spec.add_development_dependency 'rubocop-rake', '~> 0.6.0'
-  spec.add_development_dependency 'rubocop-rspec', '~> 2.17'
-  spec.add_development_dependency 'rubocop-thread_safety', '~> 0.4.4'
-  spec.add_development_dependency 'timecop', '~> 0.9.6'
   spec.metadata['rubygems_mfa_required'] = 'true'
 end
