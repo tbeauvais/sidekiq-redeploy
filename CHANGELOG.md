@@ -1,3 +1,9 @@
+## v0.1.5
+
+**Fixes and enhancements:**
+
+- Fix Process namespace collision with Sidekiq::Process
+
 ## v0.1.4
 
 **Fixes and enhancements:**
