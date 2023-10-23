@@ -20,7 +20,7 @@ module Sidekiq
 
         @reload_sidekiq = false
         @exit_loader = false
-        @loader_pid = Process.pid
+        @loader_pid = ::Process.pid
         @logger = logger
         @signal_delay = config[:signal_delay] || 1
         @watch_delay = config[:watch_delay] || 30
@@ -40,14 +40,14 @@ module Sidekiq
         process_loop
 
         log 'Waiting for Sidekiq process to end'
-        Process.waitall
+        ::Process.waitall
 
         log 'Shutting down sidekiq reloader'
       rescue StandardError => e
         log "Error in sidekiq loader: #{e.message}"
         log e.backtrace.join("\n")
         stop_sidekiq(@sidekiq_pid)
-        Process.waitall
+        ::Process.waitall
         exit 1
       end
 
@@ -88,14 +88,14 @@ module Sidekiq
         stop_sidekiq(@sidekiq_pid)
 
         # wait for sidekiq to stop
-        Process.waitall
+        ::Process.waitall
 
         fork_sidekiq
         @reload_sidekiq = false
       end
 
       def fork_sidekiq
-        @sidekiq_pid = Process.fork do
+        @sidekiq_pid = ::Process.fork do
           cli = Sidekiq::CLI.instance
           args = @sidekiq_app ? ['-r', @sidekiq_app] : []
           cli.parse(args)
@@ -121,36 +121,36 @@ module Sidekiq
       def handle_signal(signal)
         debug_handler(signal)
         # Our handle_signal gets called for child processes (i.e. sidekiq process) so we don't want to re-handle these.
-        return if @loader_pid != Process.pid
+        return if @loader_pid != ::Process.pid
 
         case signal
         when USR2
           @reload_sidekiq = true
         when TTIN
-          Process.kill(signal, @sidekiq_pid)
+          ::Process.kill(signal, @sidekiq_pid)
         when TERM, INT
           @exit_loader = true
         end
       end
 
       def debug_handler(signal)
-        log_data = { signal:, current_pid: Process.pid, loader_pid: @loader_pid, sidekiq_pid: @sidekiq_pid,
+        log_data = { signal:, current_pid: ::Process.pid, loader_pid: @loader_pid, sidekiq_pid: @sidekiq_pid,
                      reload_sidekiq: @reload_sidekiq, exit_loader: @exit_loader }
         puts "handle_signal called with #{log_data}"
       end
 
       def stop_sidekiq(pid)
-        Process.kill(TERM, pid) if pid
+        ::Process.kill(TERM, pid) if pid
       end
 
       def quiet_sidekiq(pid)
-        Process.kill(TSTP, pid) if pid
+        ::Process.kill(TSTP, pid) if pid
       end
 
       def process_died?(pid)
         return false if @exit_loader
 
-        !Process.getpgid(pid)
+        !::Process.getpgid(pid)
       rescue StandardError
         true
       end
