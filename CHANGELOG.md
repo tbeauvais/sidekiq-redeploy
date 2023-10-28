@@ -1,3 +1,10 @@
+
+## v0.1.6
+
+**Fixes and enhancements:**
+
+- Remove unneeded logging
+
 ## v0.1.5
 
 **Fixes and enhancements:**

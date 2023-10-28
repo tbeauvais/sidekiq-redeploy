@@ -76,7 +76,6 @@ module Sidekiq
         return false unless (Time.now - @watch_time) > @watch_delay
 
         @watch_time = Time.now
-        log 'Checking watch file for redeploy'
         deployer.needs_redeploy?
       end
 
