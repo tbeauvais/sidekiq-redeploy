@@ -1,3 +1,8 @@
+## v0.1.8
+
+**Fixes and enhancements:**
+
+- Allow sidekiq 7.x
 
 ## v0.1.6
 
