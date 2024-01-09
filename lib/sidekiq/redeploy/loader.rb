@@ -15,9 +15,8 @@ module Sidekiq
 
       SIGNALS = [INT, TERM, USR2, TTIN].freeze
 
-      def initialize(deployer:, sidekiq_app: nil, logger: Logger.new($stdout), num_processes: 1, config: {})
+      def initialize(deployer:, sidekiq_app: nil, logger: Logger.new($stdout), config: {}, num_processes: 1)
         require 'sidekiq/cli'
-
         @reload_sidekiq = false
         @exit_loader = false
         @loader_pid = ::Process.pid
@@ -28,7 +27,7 @@ module Sidekiq
         @loop_delay = config[:loop_delay] || 0.5
         @deployer = deployer
         @sidekiq_app = sidekiq_app
-        @num_processes = num_processes
+        @num_processes = num_processes || 1
         @sidekiq_pids = []
       end
 

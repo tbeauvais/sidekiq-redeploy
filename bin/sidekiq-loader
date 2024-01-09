@@ -13,7 +13,7 @@ def run_sidekiq(ops, logger)
   deployer.deploy(source: deployer.archive_file) if ops[:deploy]
   config = { watch_delay: ops[:watch_delay] }
 
-  Sidekiq::Redeploy::Loader.new(deployer:, logger:, sidekiq_app: ops[:sidekiq_app], num_processes: ops[:num_processes], config:).run
+  Sidekiq::Redeploy::Loader.new(deployer:, logger:, sidekiq_app: ops[:sidekiq_app], config:, num_processes: ops[:num_processes]).run
 end
 
 def option_parser(opts)
