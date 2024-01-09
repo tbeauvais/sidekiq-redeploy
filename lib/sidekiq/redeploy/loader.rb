@@ -23,7 +23,7 @@ module Sidekiq
         @loader_pid = ::Process.pid
         @logger = logger
         @signal_delay = config[:signal_delay] || 1
-        @watch_delay = config[:watch_delay] || 30
+        @watch_delay = config[:watch_delay] || 10
         @watch_time = Time.now
         @loop_delay = config[:loop_delay] || 0.5
         @deployer = deployer
@@ -32,6 +32,7 @@ module Sidekiq
 
       def run
         log "Starting sidekiq reloader... pid=#{@loader_pid}"
+        log "matt test"
 
         trap_signals
 
@@ -46,7 +47,7 @@ module Sidekiq
       rescue StandardError => e
         log "Error in sidekiq loader: #{e.message}"
         log e.backtrace.join("\n")
-        stop_sidekiq(@sidekiq_pid)
+        stop_sidekiq(@sidekiq_pids)
         ::Process.waitall
         exit 1
       end
@@ -62,12 +63,12 @@ module Sidekiq
             reload_app { deployer.deploy(source: deployer.archive_file) }
           elsif reload_sidekiq
             reload_app
-          elsif process_died?(@sidekiq_pid)
+          elsif process_died?(@sidekiq_pids)
             fork_sidekiq
           end
           next unless exit_loader
 
-          stop_sidekiq(@sidekiq_pid)
+          stop_sidekiq(@sidekiq_pids)
           break
         end
       end
@@ -80,30 +81,34 @@ module Sidekiq
       end
 
       def reload_app
-        quiet_sidekiq(@sidekiq_pid)
+        quiet_sidekiq(@sidekiq_pids)
 
         yield if block_given?
 
-        stop_sidekiq(@sidekiq_pid)
+        stop_sidekiq(@sidekiq_pids)
 
         # wait for sidekiq to stop
         ::Process.waitall
-
+        
         fork_sidekiq
         @reload_sidekiq = false
       end
 
       def fork_sidekiq
-        @sidekiq_pid = ::Process.fork do
-          cli = Sidekiq::CLI.instance
-          args = @sidekiq_app ? ['-r', @sidekiq_app] : []
-          cli.parse(args)
-          cli.run
-        rescue StandardError => e
-          message = "Error loading sidekiq process: #{e.message}"
-          log message
-          log e.backtrace.join("\n")
-          raise message
+        @sidekiq_pids = []
+        3.times do
+          pid = ::Process.fork do
+            cli = Sidekiq::CLI.instance
+            args = @sidekiq_app ? ['-r', @sidekiq_app] : []
+            cli.parse(args)
+            cli.run
+          rescue StandardError => e
+            message = "Error loading sidekiq process: #{e.message}"
+            log message
+            log e.backtrace.join("\n")
+            raise message
+          end
+          @sidekiq_pids << pid
         end
       end
 
@@ -126,7 +131,9 @@ module Sidekiq
         when USR2
           @reload_sidekiq = true
         when TTIN
-          ::Process.kill(signal, @sidekiq_pid)
+          @sidekiq_pids.each do |pid|
+            ::Process.kill(signal, pid)
+          end
         when TERM, INT
           @exit_loader = true
         end
@@ -138,18 +145,22 @@ module Sidekiq
         puts "handle_signal called with #{log_data}"
       end
 
-      def stop_sidekiq(pid)
-        ::Process.kill(TERM, pid) if pid
+      def stop_sidekiq(pids)
+        pids.each do |pid|
+          ::Process.kill(TERM, pid)
+        end
       end
 
-      def quiet_sidekiq(pid)
-        ::Process.kill(TSTP, pid) if pid
+      def quiet_sidekiq(pids)
+        pids.each do |pid|
+          ::Process.kill(TSTP, pid)
+        end
       end
 
       def process_died?(pid)
         return false if @exit_loader
 
-        !::Process.getpgid(pid)
+        !::Process.getpgid(pid[0]) # need to check if all died
       rescue StandardError
         true
       end
