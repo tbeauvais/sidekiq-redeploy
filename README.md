@@ -40,6 +40,7 @@ Usage: sidekiq-loader [options]
     -y, --watch-delay INTEGER        [Optional] Specify the number of seconds between checking watch file. Defaults to 30.
     -d, --[no-]deploy  [FLAG]        [Optional] Deploy archive on app startup. Defaults to true.
     -s, --sidekiq-app [PATH|DIR]     [Optional] Location of application to pass to sidekiq.
+    -n, --num-procs INTEGER          [Optional] Specify the number of sidekiq processes to create. Defaults to 1.
 ```
 
 For example this will start the launcher using a S3 watch file.

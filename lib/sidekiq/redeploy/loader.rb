@@ -15,7 +15,7 @@ module Sidekiq
 
       SIGNALS = [INT, TERM, USR2, TTIN].freeze
 
-      def initialize(deployer:, sidekiq_app: nil, logger: Logger.new($stdout), config: {})
+      def initialize(deployer:, sidekiq_app: nil, logger: Logger.new($stdout), num_processes: 1, config: {})
         require 'sidekiq/cli'
 
         @reload_sidekiq = false
@@ -28,11 +28,12 @@ module Sidekiq
         @loop_delay = config[:loop_delay] || 0.5
         @deployer = deployer
         @sidekiq_app = sidekiq_app
+        @num_processes = num_processes
+        @sidekiq_pids = []
       end
 
       def run
         log "Starting sidekiq reloader... pid=#{@loader_pid}"
-        log "matt test"
 
         trap_signals
 
@@ -63,8 +64,10 @@ module Sidekiq
             reload_app { deployer.deploy(source: deployer.archive_file) }
           elsif reload_sidekiq
             reload_app
-          elsif process_died?(@sidekiq_pids)
-            fork_sidekiq
+          end
+          num_dead = process_died?(@sidekiq_pids)
+          if num_dead
+            fork_sidekiq(num_dead)
           end
           next unless exit_loader
 
@@ -89,14 +92,12 @@ module Sidekiq
 
         # wait for sidekiq to stop
         ::Process.waitall
-        
         fork_sidekiq
         @reload_sidekiq = false
       end
 
-      def fork_sidekiq
-        @sidekiq_pids = []
-        3.times do
+      def fork_sidekiq(num_children = @num_processes)
+        num_children.times do
           pid = ::Process.fork do
             cli = Sidekiq::CLI.instance
             args = @sidekiq_app ? ['-r', @sidekiq_app] : []
@@ -140,7 +141,7 @@ module Sidekiq
       end
 
       def debug_handler(signal)
-        log_data = { signal:, current_pid: ::Process.pid, loader_pid: @loader_pid, sidekiq_pid: @sidekiq_pid,
+        log_data = { signal:, current_pid: ::Process.pid, loader_pid: @loader_pid, sidekiq_pids: @sidekiq_pids,
                      reload_sidekiq: @reload_sidekiq, exit_loader: @exit_loader }
         puts "handle_signal called with #{log_data}"
       end
@@ -149,6 +150,7 @@ module Sidekiq
         pids.each do |pid|
           ::Process.kill(TERM, pid)
         end
+        @sidekiq_pids = []
       end
 
       def quiet_sidekiq(pids)
@@ -157,12 +159,19 @@ module Sidekiq
         end
       end
 
-      def process_died?(pid)
+      def process_died?(pids)
         return false if @exit_loader
-
-        !::Process.getpgid(pid[0]) # need to check if all died
-      rescue StandardError
-        true
+        num_dead = 0
+        new_pids = []
+        pids.each do |pid|
+          if ::Process.waitpid(pid, ::Process::WNOHANG)
+            num_dead += 1
+          else
+            new_pids << pid
+          end
+        end
+        @sidekiq_pids = new_pids
+        num_dead
       end
 
       def log(message)
