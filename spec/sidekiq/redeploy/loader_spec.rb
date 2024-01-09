@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puma-redeploy'
 
 RSpec.describe Sidekiq::Redeploy::Loader do
-  subject(:loader) { described_class.new(deployer:, logger:, config:) }
+  subject(:loader) { described_class.new(deployer:, logger:, config:, num_processes: 2) }
 
   let(:sidekiq_pid) { 456 }
   let(:loader_pid) { 123 }
@@ -29,7 +29,7 @@ RSpec.describe Sidekiq::Redeploy::Loader do
     end
 
     it 'forks process' do
-      expect(Process).to receive(:fork).and_return(sidekiq_pid)
+      expect(Process).to receive(:fork).twice.and_return(sidekiq_pid)
       loader.run
     end
 
@@ -46,14 +46,14 @@ RSpec.describe Sidekiq::Redeploy::Loader do
       it 'sends quite and shutdown signals to sidekiq process' do
         allow(Process).to receive(:fork).and_return(sidekiq_pid)
         allow(loader).to receive(:reload_sidekiq).and_return(true)
-        expect(Process).to receive(:kill).once.with('TSTP', sidekiq_pid)
-        expect(Process).to receive(:kill).twice.with('TERM', sidekiq_pid)
+        expect(Process).to receive(:kill).twice.with('TSTP', sidekiq_pid)
+        expect(Process).to receive(:kill).exactly(4).times.with('TERM', sidekiq_pid)
         loader.run
       end
 
       it 'forks sidekiq process' do
         allow(loader).to receive(:reload_sidekiq).and_return(true)
-        expect(Process).to receive(:fork).twice.and_return(sidekiq_pid)
+        expect(Process).to receive(:fork).exactly(4).times.and_return(sidekiq_pid)
         loader.run
       end
     end
