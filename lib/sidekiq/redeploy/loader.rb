@@ -65,9 +65,7 @@ module Sidekiq
             reload_app
           end
           num_dead = process_died?(@sidekiq_pids)
-          if num_dead
-            fork_sidekiq(num_dead)
-          end
+          fork_sidekiq(num_dead) if num_dead
           next unless exit_loader
 
           stop_sidekiq(@sidekiq_pids)
@@ -160,6 +158,7 @@ module Sidekiq
 
       def process_died?(pids)
         return false if @exit_loader
+
         num_dead = 0
         new_pids = []
         pids.each do |pid|
