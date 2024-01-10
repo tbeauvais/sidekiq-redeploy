@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'pry'
-require 'pry-nav'
 require 'sidekiq'
 require 'logger'
 
