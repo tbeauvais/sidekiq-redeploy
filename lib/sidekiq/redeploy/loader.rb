@@ -157,8 +157,6 @@ module Sidekiq
       end
 
       def running_pids(pids)
-        return false if @exit_loader
-
         new_pids = []
         pids.each do |pid|
           new_pids << pid unless ::Process.waitpid(pid, ::Process::WNOHANG)
