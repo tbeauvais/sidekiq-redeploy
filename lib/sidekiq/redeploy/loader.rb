@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'pry'
 require 'pry-nav'
 require 'sidekiq'
@@ -160,11 +161,9 @@ module Sidekiq
       def running_pids(pids)
         new_pids = []
         pids.each do |pid|
-          begin
-            new_pids << pid unless ::Process.waitpid(pid, ::Process::WNOHANG)
-          rescue Errno::ECHILD
-            log "PID #{pid} does not exist."
-          end
+          new_pids << pid unless ::Process.waitpid(pid, ::Process::WNOHANG)
+        rescue Errno::ECHILD
+          log "PID #{pid} does not exist."
         end
         new_pids
       end

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'spec_helper'
 require 'puma-redeploy'
 
@@ -17,7 +18,7 @@ RSpec.describe Sidekiq::Redeploy::Loader do
   before do
     allow(Signal).to receive(:trap)
     allow(Process).to receive(:kill)
-    allow(loader).to receive_messages(exit_loader: true, running_pids: [456,456])
+    allow(loader).to receive_messages(exit_loader: true, running_pids: [456, 456])
   end
 
   describe '#run' do
