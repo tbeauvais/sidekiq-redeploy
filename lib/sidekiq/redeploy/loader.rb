@@ -22,7 +22,7 @@ module Sidekiq
         @loader_pid = ::Process.pid
         @logger = logger
         @signal_delay = config[:signal_delay] || 1
-        @watch_delay = config[:watch_delay] || 10
+        @watch_delay = config[:watch_delay] || 30
         @watch_time = Time.now
         @loop_delay = config[:loop_delay] || 0.5
         @deployer = deployer
@@ -64,8 +64,8 @@ module Sidekiq
           elsif reload_sidekiq
             reload_app
           end
-          num_dead = process_died?(@sidekiq_pids)
-          fork_sidekiq(num_dead) if num_dead
+          @sidekiq_pids = running_pids(@sidekiq_pids)
+          fork_sidekiq(@num_processes - @sidekiq_pids.length) if @sidekiq_pids.length < @num_processes
           next unless exit_loader
 
           stop_sidekiq(@sidekiq_pids)
@@ -156,20 +156,14 @@ module Sidekiq
         end
       end
 
-      def process_died?(pids)
+      def running_pids(pids)
         return false if @exit_loader
 
-        num_dead = 0
         new_pids = []
         pids.each do |pid|
-          if ::Process.waitpid(pid, ::Process::WNOHANG)
-            num_dead += 1
-          else
-            new_pids << pid
-          end
+          new_pids << pid unless ::Process.waitpid(pid, ::Process::WNOHANG)
         end
-        @sidekiq_pids = new_pids
-        num_dead
+        new_pids
       end
 
       def log(message)

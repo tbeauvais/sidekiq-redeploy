@@ -1,3 +1,9 @@
+## v0.1.9
+
+**Fixes and enhancements:**
+
+- Allow users to specify number of sidekiq worker processes with -n flag
+
 ## v0.1.8
 
 **Fixes and enhancements:**
