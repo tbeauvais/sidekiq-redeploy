@@ -19,7 +19,10 @@ Metrics/MethodLength:
   Max: 30
 
 Metrics/ClassLength:
-  Max: 120
+  Max: 140
+
+Metrics/AbcSize:
+  Max: 20
 
 RSpec/NestedGroups:
   Max: 4

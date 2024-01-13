@@ -15,9 +15,8 @@ module Sidekiq
 
       SIGNALS = [INT, TERM, USR2, TTIN].freeze
 
-      def initialize(deployer:, sidekiq_app: nil, logger: Logger.new($stdout), config: {})
+      def initialize(deployer:, sidekiq_app: nil, logger: Logger.new($stdout), config: {}, num_processes: 1)
         require 'sidekiq/cli'
-
         @reload_sidekiq = false
         @exit_loader = false
         @loader_pid = ::Process.pid
@@ -28,6 +27,8 @@ module Sidekiq
         @loop_delay = config[:loop_delay] || 0.5
         @deployer = deployer
         @sidekiq_app = sidekiq_app
+        @num_processes = num_processes || 1
+        @sidekiq_pids = []
       end
 
       def run
@@ -46,7 +47,7 @@ module Sidekiq
       rescue StandardError => e
         log "Error in sidekiq loader: #{e.message}"
         log e.backtrace.join("\n")
-        stop_sidekiq(@sidekiq_pid)
+        stop_sidekiq(@sidekiq_pids)
         ::Process.waitall
         exit 1
       end
@@ -62,12 +63,12 @@ module Sidekiq
             reload_app { deployer.deploy(source: deployer.archive_file) }
           elsif reload_sidekiq
             reload_app
-          elsif process_died?(@sidekiq_pid)
-            fork_sidekiq
           end
+          @sidekiq_pids = running_pids(@sidekiq_pids)
+          fork_sidekiq(@num_processes - @sidekiq_pids.length) if @sidekiq_pids.length < @num_processes
           next unless exit_loader
 
-          stop_sidekiq(@sidekiq_pid)
+          stop_sidekiq(@sidekiq_pids)
           break
         end
       end
@@ -80,30 +81,32 @@ module Sidekiq
       end
 
       def reload_app
-        quiet_sidekiq(@sidekiq_pid)
+        quiet_sidekiq(@sidekiq_pids)
 
         yield if block_given?
 
-        stop_sidekiq(@sidekiq_pid)
+        stop_sidekiq(@sidekiq_pids)
 
         # wait for sidekiq to stop
         ::Process.waitall
-
         fork_sidekiq
         @reload_sidekiq = false
       end
 
-      def fork_sidekiq
-        @sidekiq_pid = ::Process.fork do
-          cli = Sidekiq::CLI.instance
-          args = @sidekiq_app ? ['-r', @sidekiq_app] : []
-          cli.parse(args)
-          cli.run
-        rescue StandardError => e
-          message = "Error loading sidekiq process: #{e.message}"
-          log message
-          log e.backtrace.join("\n")
-          raise message
+      def fork_sidekiq(num_children = @num_processes)
+        num_children.times do
+          pid = ::Process.fork do
+            cli = Sidekiq::CLI.instance
+            args = @sidekiq_app ? ['-r', @sidekiq_app] : []
+            cli.parse(args)
+            cli.run
+          rescue StandardError => e
+            message = "Error loading sidekiq process: #{e.message}"
+            log message
+            log e.backtrace.join("\n")
+            raise message
+          end
+          @sidekiq_pids << pid
         end
       end
 
@@ -126,32 +129,41 @@ module Sidekiq
         when USR2
           @reload_sidekiq = true
         when TTIN
-          ::Process.kill(signal, @sidekiq_pid)
+          @sidekiq_pids.each do |pid|
+            ::Process.kill(signal, pid)
+          end
         when TERM, INT
           @exit_loader = true
         end
       end
 
       def debug_handler(signal)
-        log_data = { signal:, current_pid: ::Process.pid, loader_pid: @loader_pid, sidekiq_pid: @sidekiq_pid,
+        log_data = { signal:, current_pid: ::Process.pid, loader_pid: @loader_pid, sidekiq_pids: @sidekiq_pids,
                      reload_sidekiq: @reload_sidekiq, exit_loader: @exit_loader }
         puts "handle_signal called with #{log_data}"
       end
 
-      def stop_sidekiq(pid)
-        ::Process.kill(TERM, pid) if pid
+      def stop_sidekiq(pids)
+        pids.each do |pid|
+          ::Process.kill(TERM, pid)
+        end
+        @sidekiq_pids = []
       end
 
-      def quiet_sidekiq(pid)
-        ::Process.kill(TSTP, pid) if pid
+      def quiet_sidekiq(pids)
+        pids.each do |pid|
+          ::Process.kill(TSTP, pid)
+        end
       end
 
-      def process_died?(pid)
-        return false if @exit_loader
-
-        !::Process.getpgid(pid)
-      rescue StandardError
-        true
+      def running_pids(pids)
+        new_pids = []
+        pids.each do |pid|
+          new_pids << pid unless ::Process.waitpid(pid, ::Process::WNOHANG)
+        rescue Errno::ECHILD
+          log "PID #{pid} does not exist."
+        end
+        new_pids
       end
 
       def log(message)

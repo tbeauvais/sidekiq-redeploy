@@ -13,7 +13,8 @@ def run_sidekiq(ops, logger)
   deployer.deploy(source: deployer.archive_file) if ops[:deploy]
   config = { watch_delay: ops[:watch_delay] }
 
-  Sidekiq::Redeploy::Loader.new(deployer:, logger:, sidekiq_app: ops[:sidekiq_app], config:).run
+  Sidekiq::Redeploy::Loader.new(deployer:, logger:, sidekiq_app: ops[:sidekiq_app], config:,
+                                num_processes: ops[:num_processes]).run
 end
 
 def option_parser(opts)
@@ -38,6 +39,11 @@ def option_parser(opts)
 
     o.on '-s', '--sidekiq-app [PATH|DIR]', '[Optional] Location of application to pass to sidekiq.' do |arg|
       opts[:sidekiq_app] = arg
+    end
+
+    o.on '-n', '--num-procs INTEGER', Integer,
+         '[Optional] Specify the number of sidekiq processes to create. Defaults to 1.' do |arg|
+      opts[:num_processes] = arg
     end
   end
 end
