@@ -1,3 +1,9 @@
+## v0.1.10
+
+**Fixes and enhancements:**
+
+- Add support to run commands prior to redeploy using a yaml watch file. This is useful for running a migration or bundle gems.
+
 ## v0.1.9
 
 **Fixes and enhancements:**

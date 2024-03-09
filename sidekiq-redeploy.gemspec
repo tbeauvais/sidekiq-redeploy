@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
   spec.bindir        = 'bin'
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'puma-redeploy', '~> 0.3.3'
+  spec.add_dependency 'puma-redeploy', '~> 0.3.4'
   spec.add_dependency 'sidekiq', '>= 6', '< 8'
 
   spec.metadata['rubygems_mfa_required'] = 'true'

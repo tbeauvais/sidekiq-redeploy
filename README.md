@@ -43,9 +43,31 @@ Usage: sidekiq-loader [options]
     -n, --num-procs INTEGER          [Optional] Specify the number of sidekiq processes to create. Defaults to 1.
 ```
 
-For example this will start the launcher using a S3 watch file.
+The watch file can contain an optional list of commands to run and the required archive_location. The archive_location can be a file path or S3 URL
+For example when using a file:
+```yaml
+---
+commands:
+  - bundle 
+archive_location: /app/pkg/test_app_0.0.3.zip
+```
+
+For example when using S3:
+```yaml
+---
+commands:
+  - bundle 
+archive_location: s3://puma-test-app-archives/test_app_0.0.3.zip
+```
+
+For example this will start the launcher using a S3 yaml watch file.
 ```shell
-bundle exec sidekiq-loader -a /app -w s3://puma-test-app-archives/watch.me
+bundle exec sidekiq-loader -a /app -w s3://puma-test-app-archives/watch.yml
+```
+
+For example this will start the launcher using a local yaml watch file.
+```shell
+bundle exec sidekiq-loader -a ./ -s ./lib/sidekiq_server.rb -w build/pkg/watch.yml
 ```
 
 In the example above the `watch.me` contents would look like the following. In this case the `test_app_0.0.3.zip` must exist in the `puma-test-app-archives` S3 bucket.

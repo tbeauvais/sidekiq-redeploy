@@ -60,7 +60,17 @@ module Sidekiq
         loop do
           sleep(loop_delay)
           if needs_redeploy?
-            reload_app { deployer.deploy(source: deployer.archive_file) }
+            reload_app do
+              watch_file_data = deployer.watch_file_data
+
+              archive_file = deployer.archive_file(watch_file_data[:archive_location])
+
+              logger.info "Sidekiq restart begin file=#{deployer.watch_file} archive=#{archive_file}"
+
+              Puma::Redeploy::CommandRunner.new(commands: watch_file_data[:commands], logger:).run
+
+              deployer.deploy(source: archive_file)
+            end
           elsif reload_sidekiq
             reload_app
           end

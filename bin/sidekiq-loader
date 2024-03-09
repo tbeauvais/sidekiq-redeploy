@@ -9,8 +9,12 @@ require 'optparse'
 def run_sidekiq(ops, logger)
   deployer = Puma::Redeploy::DeployerFactory.create(target: ops[:app_dir], watch_file: ops[:watch], logger:)
 
+  watch_file_data = deployer.watch_file_data
+
+  archive_file = deployer.archive_file(watch_file_data[:archive_location])
+
   # Load app archive on launch
-  deployer.deploy(source: deployer.archive_file) if ops[:deploy]
+  deployer.deploy(source: archive_file) if ops[:deploy]
   config = { watch_delay: ops[:watch_delay] }
 
   Sidekiq::Redeploy::Loader.new(deployer:, logger:, sidekiq_app: ops[:sidekiq_app], config:,
