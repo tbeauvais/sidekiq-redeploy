@@ -67,9 +67,9 @@ module Sidekiq
 
               logger.info "Sidekiq restart begin file=#{deployer.watch_file} archive=#{archive_file}"
 
-              Puma::Redeploy::CommandRunner.new(commands: watch_file_data[:commands], logger:).run
-
               deployer.deploy(source: archive_file)
+
+              Puma::Redeploy::CommandRunner.new(commands: watch_file_data[:commands], logger:).run
             end
           elsif reload_sidekiq
             reload_app
