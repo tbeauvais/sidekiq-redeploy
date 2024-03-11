@@ -1,3 +1,10 @@
+# v0.2.1
+
+**Fixes and enhancements:**
+
+-  Also bump puma-redeploy gem to pickup fix
+
+
 # v0.2.0
 
 **Fixes and enhancements:**
