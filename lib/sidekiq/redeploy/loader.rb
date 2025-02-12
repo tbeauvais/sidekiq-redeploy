@@ -97,6 +97,7 @@ module Sidekiq
 
         stop_sidekiq(@sidekiq_pids)
 
+        log 'Waiting for Sidekiq process to end for reloading'
         # wait for sidekiq to stop
         ::Process.waitall
         fork_sidekiq
@@ -154,6 +155,7 @@ module Sidekiq
       end
 
       def stop_sidekiq(pids)
+        log "Stopping Sidekiq pids #{pids}"
         pids.each do |pid|
           ::Process.kill(TERM, pid)
         end
@@ -161,6 +163,7 @@ module Sidekiq
       end
 
       def quiet_sidekiq(pids)
+        log "Quieting Sidekiq pids #{pids}"
         pids.each do |pid|
           ::Process.kill(TSTP, pid)
         end
